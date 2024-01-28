@@ -1,14 +1,17 @@
 package implement
 
 import (
+	"EM_test_task/pkg/server"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 )
 
-type AgifyService struct{}
+type AgifyService struct {
+}
 
 type AgifyResponse struct {
 	Count int    `json:"count"`
@@ -16,19 +19,16 @@ type AgifyResponse struct {
 	Age   int    `json:"age"`
 }
 
+// GetAge - метод для похода в API Agify, получает возраст по имени
 func (s *AgifyService) GetAge(name string) (int, error) {
-	url := fmt.Sprintf("https://api.agify.io/?name=%v", name)
+	agify := os.Getenv("agify_url")
+	url := fmt.Sprintf(agify + name)
 
-	client := http.Client{}
+	client := server.NewClient()
 
-	req, err := http.NewRequest("GET", url, nil)
+	resp, err := client.SendRequest(url)
 	if err != nil {
-		log.Printf("Error creating request:%v", err)
-		return 0, err
-	}
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Printf("Error making request:%v", err)
+		log.Printf("Error making Agify request: %v", err)
 		return 0, err
 	}
 	defer resp.Body.Close()
@@ -49,3 +49,29 @@ func (s *AgifyService) GetAge(name string) (int, error) {
 	}
 	return 0, err
 }
+
+//func (s *AgifyService) GetAge(name string, ch chan int) {
+//	url := fmt.Sprintf("https://api.agify.io/?name=%v", name)
+//
+//	client := server.NewClient()
+//
+//	resp, err := client.SendRequest(url)
+//	if err != nil {
+//		log.Printf("Error making Agify request: %v", err)
+//	}
+//	defer resp.Body.Close()
+//
+//	var agifyResponse AgifyResponse
+//
+//	if resp.StatusCode == http.StatusOK {
+//		body, err := ioutil.ReadAll(resp.Body)
+//		if err != nil {
+//			log.Printf("Error reading the response body:%v", err)
+//		}
+//		json.Unmarshal(body, &agifyResponse)
+//
+//		ch <- agifyResponse.Age
+//	} else {
+//		fmt.Println("Error: ", resp.Status)
+//	}
+//}

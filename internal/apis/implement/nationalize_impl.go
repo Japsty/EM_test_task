@@ -1,12 +1,15 @@
 package implement
 
 import (
+	"EM_test_task/pkg/server"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 )
+
+type NationalizeService struct{}
 
 type NationalizeResponse struct {
 	Count     int           `json:"count"`
@@ -19,21 +22,16 @@ type CountryInfo struct {
 	Probability float64 `json:"probability"`
 }
 
-type NationalizeService struct{}
-
+// GetNationality - метод для похода в API Nationalize, получает национальность по фамилии
+// (в тз было указано имя в запросе, но в доке апишки написана фамилия) )
 func (s *NationalizeService) GetNationality(surname string) (string, error) {
 	url := fmt.Sprintf("https://api.nationalize.io/?name=%v", surname)
 
-	client := http.Client{}
+	client := server.NewClient()
 
-	req, err := http.NewRequest("GET", url, nil)
+	resp, err := client.SendRequest(url)
 	if err != nil {
-		log.Printf("Error creating request:%v", err)
-		return "", err
-	}
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Printf("Error making request:%v", err)
+		log.Printf("Error making Nationalize request: %v", err)
 		return "", err
 	}
 	defer resp.Body.Close()

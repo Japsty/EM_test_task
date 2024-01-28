@@ -1,0 +1,31 @@
+version: '3'
+
+services:
+  postgres:
+    image: postgres
+    restart: always
+    environment:
+      - POSTGRES_DB=EM_test_task
+      - POSTGRES_USER=EM
+      - POSTGRES_PASSWORD=test
+    ports:
+      - "5432:5432"
+    networks:
+      - service_network
+
+  service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_SOURCE=postgresql://EM:test@postgres:5432/EM_test_task?sslmode=disable
+    depends_on:
+      - postgres
+    networks:
+      - service_network
+
+networks:
+  service_network:
+    driver: bridge

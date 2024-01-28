@@ -5,12 +5,18 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/Masterminds/squirrel"
 	"github.com/pingcap/log"
+	"log/slog"
+	"time"
 )
 
+// Repository - интерфейс, предоставляющий все доступные методы для работы с базой данных
 type Repository interface {
 	CreatePerson(ctx context.Context, arg PersonParams) (entities.Person, error)
-	GetPeople() ([]entities.Person, error)
+	GetPeople(page, perPage int) ([]entities.Person, error)
+	GetPerson(id int) (entities.Person, error)
+	GetPeopleFiltered(page, perPage int, filter Filter) ([]entities.Person, error)
 	UpdatePerson(id int, person entities.Person) error
 	DeletePerson(id int) error
 }
@@ -34,8 +40,17 @@ type PersonParams struct {
 	Age         int
 	Gender      string
 	Nationality string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 }
 
+type Filter struct {
+	SortBy string `json:"sort_by,omitempty"`
+	From   int    `json:"from,omitempty"`
+	To     int    `json:"to,omitempty"`
+}
+
+// CreatePerson - метод для создания человека по параметрам name,surname и по желанию patronymic
 func (s *personRepository) CreatePerson(ctx context.Context, arg PersonParams) (entities.Person, error) {
 	var person entities.Person
 
@@ -66,16 +81,21 @@ func (s *personRepository) CreatePerson(ctx context.Context, arg PersonParams) (
 		return entities.Person{}, fmt.Errorf("error creating person: %v", err)
 	}
 
+	slog.Debug("CreatePerson created person with id:", person.ID)
 	return person, nil
 }
 
-func (s *personRepository) GetPeople() ([]entities.Person, error) {
+// GetPeople - метод для получения списка людей с пагинацией
+func (s *personRepository) GetPeople(page, perPage int) ([]entities.Person, error) {
+	offset := (page - 1) * perPage
+
 	query := `
 		SELECT * FROM people
+		LIMIT $1 OFFSET $2
 	`
-	rows, err := s.db.QueryContext(context.Background(), query)
+	rows, err := s.db.QueryContext(context.Background(), query, perPage, offset)
 	if err != nil {
-		log.Error("GetPeople QueryContext Error")
+		slog.Error("GetPeople QueryContext Error")
 		return nil, fmt.Errorf("error getting people: %v", err)
 	}
 	defer rows.Close()
@@ -92,30 +112,130 @@ func (s *personRepository) GetPeople() ([]entities.Person, error) {
 			&person.Age,
 			&person.Gender,
 			&person.Nationality,
+			&person.CreatedAt,
+			&person.UpdatedAt,
 		); err != nil {
-			log.Error("GetPeople scan process Error")
+			slog.Error("GetPeople scan process Error")
 			return nil, fmt.Errorf("error scanning person row: %v", err)
 		}
 		people = append(people, person)
 	}
 
+	slog.Debug("GetPeople found people")
 	return people, nil
 }
 
+// GetPerson - метод для получения одного человека по id
+func (s *personRepository) GetPerson(id int) (entities.Person, error) {
+	query := `
+		SELECT * FROM people
+		WHERE id = $1
+	`
+
+	var person entities.Person
+
+	err := s.db.QueryRowContext(context.Background(), query, id).Scan(
+		&person.ID,
+		&person.Name,
+		&person.Surname,
+		&person.Patronymic,
+		&person.Age,
+		&person.Gender,
+		&person.Nationality,
+		&person.CreatedAt,
+		&person.UpdatedAt,
+	)
+
+	if err != nil {
+		slog.Error("GetPerson Error")
+		return entities.Person{}, fmt.Errorf("error getting person: %v", err)
+	}
+
+	slog.Debug("GetPerson found person with id:", id)
+	return person, nil
+}
+
+// GetPeopleFiltered - метод для получения списка людей с применением пагинации и фильтрации
+func (s *personRepository) GetPeopleFiltered(page, perPage int, filter Filter) ([]entities.Person, error) {
+	query := squirrel.Select("*").From("people").Where("1 = 1")
+
+	var args []interface{}
+
+	if filter.From > 0 {
+		if filter.SortBy == "age" {
+			query = query.Where(squirrel.Gt{"age": filter.From})
+		} else if filter.SortBy == "id" {
+			query = query.Where(squirrel.Gt{"id": filter.From})
+		} else {
+			slog.Error("GetPeopleFiltered incorrect SortBy Input: ", filter.SortBy)
+			return nil, nil
+		}
+	}
+	if filter.To > 0 {
+		if filter.SortBy == "age" {
+			query = query.Where(squirrel.Gt{"age": filter.To})
+		} else if filter.SortBy == "id" {
+			query = query.Where(squirrel.Gt{"id": filter.To})
+		} else {
+			slog.Error("GetPeopleFiltered incorrect SortBy Input: ", filter.SortBy)
+			return nil, nil
+		}
+	}
+
+	query = query.Limit(uint64(perPage)).Offset(uint64((page - 1) * perPage))
+
+	builtQuery, args, err := query.ToSql()
+
+	rows, err := s.db.QueryContext(context.Background(), builtQuery, args...)
+	if err != nil {
+		slog.Error("GetPeopleFiltered QueryContext Error ")
+		return nil, fmt.Errorf("error getting filtered people: %v", err)
+	}
+	defer rows.Close()
+
+	var people []entities.Person
+
+	for rows.Next() {
+		var person entities.Person
+		if err := rows.Scan(
+			&person.ID,
+			&person.Name,
+			&person.Surname,
+			&person.Patronymic,
+			&person.Age,
+			&person.Gender,
+			&person.Nationality,
+			&person.CreatedAt,
+			&person.UpdatedAt,
+		); err != nil {
+			slog.Error("GetPeopleFiltered scan process Error")
+			return nil, fmt.Errorf("error scanning person row: %v", err)
+		}
+		people = append(people, person)
+	}
+
+	slog.Debug("GetPeopleFiltered found people")
+	return people, nil
+}
+
+// UpdatePerson - метод для обновление данных о человеке по его id
 func (s *personRepository) UpdatePerson(id int, person entities.Person) error {
 	query := `
         UPDATE people
-        SET name = $2, surname = $3, patronymic = $4, age = $5, gender = $6, nationality = $7
+        SET name = $2, surname = $3, patronymic = $4, age = $5, gender = $6, nationality = $7, updated_at = $8
         WHERE id = $1
     `
-	_, err := s.db.Exec(query, id, person.Name, person.Surname, person.Patronymic, person.Age, person.Gender, person.Nationality)
+	_, err := s.db.Exec(query, id, person.Name, person.Surname, person.Patronymic, person.Age, person.Gender, person.Nationality, person.UpdatedAt)
 	if err != nil {
-		log.Error("UpdatePerson ExecQuery Error")
+		slog.Error("UpdatePerson ExecQuery Error")
 		return fmt.Errorf("error updating person: %v", err)
 	}
+
+	slog.Debug("UpdatePerson updated person with id:", id)
 	return err
 }
 
+// DeletePerson - метод для удаления человека из базы по его id
 func (s *personRepository) DeletePerson(id int) error {
 	query := `
         DELETE FROM people
@@ -123,8 +243,10 @@ func (s *personRepository) DeletePerson(id int) error {
     `
 	_, err := s.db.Exec(query, id)
 	if err != nil {
-		log.Error("DeletePerson ExecQuery Error")
+		slog.Error("DeletePerson ExecQuery Error")
 		return fmt.Errorf("error deleting person: %v", err)
 	}
+
+	slog.Debug("DeletePerson deleted person with id:", id)
 	return nil
 }

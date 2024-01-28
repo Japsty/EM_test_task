@@ -1,6 +1,7 @@
 package implement
 
 import (
+	"EM_test_task/pkg/server"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -17,19 +18,15 @@ type GenderizeResponce struct {
 	Probability float64 `json:"float64"`
 }
 
+// GetGender - метод для похода в API Genderuze, получает пол по имени
 func (s *GenderizeService) GetGender(name string) (string, error) {
 	url := fmt.Sprintf("https://api.genderize.io/?name=%v", name)
 
-	client := http.Client{}
+	client := server.NewClient()
 
-	req, err := http.NewRequest("GET", url, nil)
+	resp, err := client.SendRequest(url)
 	if err != nil {
-		log.Printf("Error creating request:%v", err)
-		return "", err
-	}
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Printf("Error making request:%v", err)
+		log.Printf("Error making Genderize request: %v", err)
 		return "", err
 	}
 	defer resp.Body.Close()

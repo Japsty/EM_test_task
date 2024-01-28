@@ -1,5 +1,4 @@
--- goose up+
-
+-- +goose Up
 CREATE TABLE IF NOT EXISTS people
 (
     id         SERIAL PRIMARY KEY,
@@ -8,8 +7,10 @@ CREATE TABLE IF NOT EXISTS people
     patronymic VARCHAR(255),
     age INT,
     gender VARCHAR(255),
-    nationality VARCHAR(255)
+    nationality VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- goose down
+-- +goose Down
 DROP TABLE IF EXISTS people;
