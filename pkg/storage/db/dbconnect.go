@@ -10,10 +10,10 @@ import (
 
 // ConnectToDb - функция создающее подключение с бд и предоставляющее его наружу
 func ConnectToDb() (*sql.DB, error) {
-	dbDriver := os.Getenv("DB_DRIVER")
-	dbSource := os.Getenv("DB_SOURCE")
+	DBDriver := os.Getenv("DB_DRIVER")
+	DBSource := os.Getenv("DB_SOURCE")
 
-	db, err := sql.Open(dbDriver, dbSource)
+	db, err := sql.Open(DBDriver, DBSource)
 
 	slog.Debug("Db connection opened")
 	if err != nil {

@@ -5,9 +5,9 @@ services:
     image: postgres
     restart: always
     environment:
-      POSTGRES_DB: Postgres
-      POSTGRES_USER: Test
-      POSTGRES_PASSWORD: Test
+      POSTGRES_DB: Efficent
+      POSTGRES_USER: Mobile
+      POSTGRES_PASSWORD: mobile
     ports:
       - "5432:5432"
     networks:
