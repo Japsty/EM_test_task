@@ -31,9 +31,10 @@ func main() {
 	}
 
 	//Создаем gin router
-	//gin.SetMode(gin.ReleaseMode)
-	gin.SetMode(gin.DebugMode)
+	gin.SetMode(gin.ReleaseMode)
+	//gin.SetMode(gin.DebugMode)
 	router := gin.Default()
+
 	slog.Info("Server started")
 
 	//Коннектимся к бд
@@ -41,6 +42,7 @@ func main() {
 	if err != nil {
 		log.Fatal("Main ConnectToDb Error")
 	}
+	slog.Debug("бд работает")
 	defer db.Close()
 
 	//делаем миграцию
@@ -48,6 +50,7 @@ func main() {
 	if err != nil {
 		log.Fatal("Main failed to create NewProvider for migration")
 	}
+
 	provider.Up(context.Background())
 	repo := storage.New(db)
 
@@ -61,14 +64,18 @@ func main() {
 		GenderizeService:   &genderizeService,
 		NationalizeService: &nationalizeService,
 	}
+	slog.Debug("сервисы подключены")
 
 	//Сами эндпоинты
 	router.GET("/people", ph.GetPersons)
 	router.GET("/people/:id", ph.GetPerson)
-	router.GET("/people-filtered", ph.GetPersonsFiltered)
+	//router.GET("/people-filtered", ph.GetPersonsFiltered)
 	router.DELETE("/people/:id", ph.DeletePersonByID)
 	router.PUT("/people/:id", ph.UpdatePerson)
 	router.POST("/people", ph.AddPerson)
 
-	router.Run("localhost:8080")
+	err = router.Run("localhost:8080")
+	if err != nil {
+		log.Fatal("Server dropped")
+	}
 }

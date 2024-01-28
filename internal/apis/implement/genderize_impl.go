@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 )
 
 type GenderizeService struct{}
@@ -20,7 +21,8 @@ type GenderizeResponce struct {
 
 // GetGender - метод для похода в API Genderuze, получает пол по имени
 func (s *GenderizeService) GetGender(name string) (string, error) {
-	url := fmt.Sprintf("https://api.genderize.io/?name=%v", name)
+	gender := os.Getenv("GENDERIZE_URL")
+	url := fmt.Sprintf(gender + name)
 
 	client := server.NewClient()
 

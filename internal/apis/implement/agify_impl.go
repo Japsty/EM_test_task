@@ -21,7 +21,7 @@ type AgifyResponse struct {
 
 // GetAge - метод для похода в API Agify, получает возраст по имени
 func (s *AgifyService) GetAge(name string) (int, error) {
-	agify := os.Getenv("agify_url")
+	agify := os.Getenv("AGIFY_URL")
 	url := fmt.Sprintf(agify + name)
 
 	client := server.NewClient()

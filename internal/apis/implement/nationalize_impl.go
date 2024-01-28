@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 )
 
 type NationalizeService struct{}
@@ -25,7 +26,8 @@ type CountryInfo struct {
 // GetNationality - метод для похода в API Nationalize, получает национальность по фамилии
 // (в тз было указано имя в запросе, но в доке апишки написана фамилия) )
 func (s *NationalizeService) GetNationality(surname string) (string, error) {
-	url := fmt.Sprintf("https://api.nationalize.io/?name=%v", surname)
+	nation := os.Getenv("NATIONALIZE_URL")
+	url := fmt.Sprintf(nation + surname)
 
 	client := server.NewClient()
 

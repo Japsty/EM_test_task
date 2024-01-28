@@ -14,13 +14,14 @@ func ConnectToDb() (*sql.DB, error) {
 	dbSource := os.Getenv("DB_SOURCE")
 
 	db, err := sql.Open(dbDriver, dbSource)
+
 	slog.Debug("Db connection opened")
 	if err != nil {
 		slog.Error("Failed to connect to db")
 		fmt.Println("Error connecting to the database:", err)
 		return nil, err
 	}
-	time.Sleep(5 * time.Second)
+	time.Sleep(2 * time.Second)
 
 	err = db.Ping()
 	if err != nil {

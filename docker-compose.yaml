@@ -1,13 +1,13 @@
 version: '3'
 
 services:
-  postgres:
+  pq_database:
     image: postgres
     restart: always
     environment:
-      - POSTGRES_DB=EM_test_task
-      - POSTGRES_USER=EM
-      - POSTGRES_PASSWORD=test
+      POSTGRES_DB: Postgres
+      POSTGRES_USER: Test
+      POSTGRES_PASSWORD: Test
     ports:
       - "5432:5432"
     networks:
@@ -17,14 +17,14 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    depends_on:
+      - pq_database
+    networks:
+      - service_network
     ports:
       - "8080:8080"
     environment:
-      - DB_SOURCE=postgresql://EM:test@postgres:5432/EM_test_task?sslmode=disable
-    depends_on:
-      - postgres
-    networks:
-      - service_network
+      PORT: '8080'
 
 networks:
   service_network:
