@@ -49,29 +49,3 @@ func (s *AgifyService) GetAge(name string) (int, error) {
 	}
 	return 0, err
 }
-
-//func (s *AgifyService) GetAge(name string, ch chan int) {
-//	url := fmt.Sprintf("https://api.agify.io/?name=%v", name)
-//
-//	client := server.NewClient()
-//
-//	resp, err := client.SendRequest(url)
-//	if err != nil {
-//		log.Printf("Error making Agify request: %v", err)
-//	}
-//	defer resp.Body.Close()
-//
-//	var agifyResponse AgifyResponse
-//
-//	if resp.StatusCode == http.StatusOK {
-//		body, err := ioutil.ReadAll(resp.Body)
-//		if err != nil {
-//			log.Printf("Error reading the response body:%v", err)
-//		}
-//		json.Unmarshal(body, &agifyResponse)
-//
-//		ch <- agifyResponse.Age
-//	} else {
-//		fmt.Println("Error: ", resp.Status)
-//	}
-//}
