@@ -21,7 +21,7 @@
 
 ### Доступные методы
 
-*У проекта есть описание методов в [Postman](https://api.postman.com/collections/29141861-24c437d5-dd2e-4053-9767-36326e30a105?access_key=undefined)*
+*У проекта есть описание методов в [Postman](https://www.postman.com/japsty/workspace/danilvinogradov/collection/29141861-24c437d5-dd2e-4053-9767-36326e30a105?action=share&creator=32626453)*
 
 #### **POST** /people
 Метод добавления нового человека
