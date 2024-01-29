@@ -13,4 +13,4 @@ CREATE TABLE IF NOT EXISTS people
 );
 
 -- +goose Down
-DROP TABLE IF EXISTS people;
+-- DROP TABLE IF EXISTS people;

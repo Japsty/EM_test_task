@@ -1,4 +1,4 @@
-package apis
+package api
 
 type AgifyGateway interface {
 	GetAge(name string) (int, error)

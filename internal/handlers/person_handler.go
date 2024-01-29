@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"EM_test_task/internal/apis"
+	"EM_test_task/internal/api"
 	"EM_test_task/internal/entities"
 	"EM_test_task/pkg/storage"
 	"github.com/gin-gonic/gin"
@@ -26,16 +26,10 @@ type ApiInput struct {
 
 type PersonHandler struct {
 	PersonRepo         storage.Repository
-	AgifyService       apis.AgifyGateway
-	GenderizeService   apis.GenderizeGateway
-	NationalizeService apis.NationalizeGateway
+	AgifyService       api.AgifyGateway
+	GenderizeService   api.GenderizeGateway
+	NationalizeService api.NationalizeGateway
 }
-
-//type Filter struct {
-//	SortBy string `json:"sort_by,omitempty"`
-//	From   int    `json:"ageFrom,omitempty"`
-//	To     int    `json:"ageTo,omitempty"`
-//}
 
 // AddPerson - метод, вызывающий CreatePerson и предоставляющий всю необходимую
 // информацию для создания записи в бд

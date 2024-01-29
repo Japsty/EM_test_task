@@ -1,7 +1,7 @@
 package main
 
 import (
-	"EM_test_task/internal/apis/implement"
+	"EM_test_task/internal/api/implement"
 	"EM_test_task/internal/handlers"
 	"EM_test_task/pkg/storage"
 	"EM_test_task/pkg/storage/db"
@@ -29,10 +29,11 @@ func main() {
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
+	slog.Default()
 
 	//Создаем gin router
-	gin.SetMode(gin.ReleaseMode)
-	//gin.SetMode(gin.DebugMode)
+	//gin.SetMode(gin.ReleaseMode)
+	gin.SetMode(gin.DebugMode)
 	router := gin.Default()
 
 	slog.Info("Server started")
@@ -42,17 +43,26 @@ func main() {
 	if err != nil {
 		log.Fatal("Main ConnectToDb Error")
 	}
-	slog.Debug("бд работает")
+	slog.Info("Бд подключена")
 	defer db.Close()
 
+	err = db.Ping()
+	if err != nil {
+		log.Fatal("Main PingDb Error")
+	}
+	slog.Info("Пинг бд успешен")
+
+	repo := storage.New(db)
 	//делаем миграцию
 	provider, err := goose.NewProvider(database.DialectPostgres, db, migrations.Embed)
 	if err != nil {
 		log.Fatal("Main failed to create NewProvider for migration")
 	}
-
-	provider.Up(context.Background())
-	repo := storage.New(db)
+	_, err = provider.Up(context.Background())
+	if err != nil {
+		slog.Info("Failed to up migration")
+		return
+	}
 
 	//встраиваем все сервисы
 	agifyService := implement.AgifyService{}
@@ -64,18 +74,21 @@ func main() {
 		GenderizeService:   &genderizeService,
 		NationalizeService: &nationalizeService,
 	}
-	slog.Debug("сервисы подключены")
+	slog.Info("сервисы подключены")
 
 	//Сами эндпоинты
 	router.GET("/people", ph.GetPersons)
 	router.GET("/people/:id", ph.GetPerson)
-	//router.GET("/people-filtered", ph.GetPersonsFiltered)
+	router.GET("/people-filtered", ph.GetPersonsFiltered)
 	router.DELETE("/people/:id", ph.DeletePersonByID)
 	router.PUT("/people/:id", ph.UpdatePerson)
 	router.POST("/people", ph.AddPerson)
 
-	err = router.Run("localhost:8080")
+	//err = router.Run("localhost:8080") - если на локальной машине
+	err = router.Run(":8080")
 	if err != nil {
 		log.Fatal("Server dropped")
 	}
+
+	slog.Info("Сервис работает по порту 8080")
 }

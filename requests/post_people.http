@@ -3,9 +3,9 @@ POST http://localhost:8080/people
 Content-Type: application/json
 
 {
-  "name": "John",
-  "surname": "Doe",
-  "patronymic": "Smith"
+  "name": "Danil",
+  "surname": "Vinogradov",
+  "patronymic": "Sergeevich"
 }
 
 ###
@@ -17,14 +17,18 @@ GET http://localhost:8080/people?page=1&per_page=10
 GET http://localhost:8080/people/1
 
 ###
+# GET /people-filtered
+GET http://localhost:8080/people-filtered?page=1&per_page=10&sort_by=id&from=25&to=31
+
+###
 # PUT /people/:id
 PUT http://localhost:8080/people/1
 Content-Type: application/json
 
 {
-"name": "Updated John",
-"surname": "Updated Doe",
-"patronymic": "Updated Smith"
+  "name": "Vladimr",
+  "surname": "Zabelin",
+  "patronymic": "Dmitrievich"
 }
 
 ###
