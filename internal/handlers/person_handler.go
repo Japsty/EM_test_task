@@ -73,21 +73,6 @@ func (ph *PersonHandler) AddPerson(c *gin.Context) {
 	gender := <-genderCh
 	nation := <-nationCh
 
-	//if age == 0 {
-	//	c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get age"})
-	//	return
-	//}
-	//
-	//if gender == "" {
-	//	c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get gender"})
-	//	return
-	//}
-	//
-	//if nation == "" {
-	//	c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get nationality"})
-	//	return
-	//}
-
 	person, err := ph.PersonRepo.CreatePerson(c.Request.Context(), storage.PersonParams{
 		Name:        personInput.Name,
 		Surname:     personInput.Surname,
