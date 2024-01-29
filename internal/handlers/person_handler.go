@@ -233,21 +233,6 @@ func (ph *PersonHandler) UpdatePerson(c *gin.Context) {
 	gender := <-genderCh
 	nation := <-nationCh
 
-	if age == 0 {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get age"})
-		return
-	}
-
-	if gender == "" {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get gender"})
-		return
-	}
-
-	if nation == "" {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get nationality"})
-		return
-	}
-
 	currentPerson, err := ph.PersonRepo.GetPerson(id)
 	if err != nil {
 		slog.Error("UpdatePerson GetPerson Error: ", err)
