@@ -5,7 +5,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/Masterminds/squirrel"
 	"github.com/pingcap/log"
 	"log/slog"
 	"time"
@@ -16,7 +15,7 @@ type Repository interface {
 	CreatePerson(ctx context.Context, arg PersonParams) (entities.Person, error)
 	GetPeople(page, perPage int) ([]entities.Person, error)
 	GetPerson(id int) (entities.Person, error)
-	GetPeopleFiltered(page, perPage int, filter Filter) ([]entities.Person, error)
+	GetPeopleFiltered(sort string, from int, to int, page int, perPage int) ([]entities.Person, error)
 	UpdatePerson(id int, person entities.Person) error
 	DeletePerson(id int) error
 }
@@ -45,7 +44,7 @@ type PersonParams struct {
 }
 
 type Filter struct {
-	SortBy string `json:"sort_by,omitempty"`
+	SortBy string `json:"sort_by"`
 	From   int    `json:"from,omitempty"`
 	To     int    `json:"to,omitempty"`
 }
@@ -156,37 +155,62 @@ func (s *personRepository) GetPerson(id int) (entities.Person, error) {
 }
 
 // GetPeopleFiltered - метод для получения списка людей с применением пагинации и фильтрации
-func (s *personRepository) GetPeopleFiltered(page, perPage int, filter Filter) ([]entities.Person, error) {
-	query := squirrel.Select("*").From("people").Where("1 = 1")
+func (s *personRepository) GetPeopleFiltered(sort string, from int, to int, page int, perPage int) ([]entities.Person, error) {
+	slog.Info("", sort, from, to)
 
+	var query string
 	var args []interface{}
 
-	if filter.From > 0 {
-		if filter.SortBy == "age" {
-			query = query.Where(squirrel.Gt{"age": filter.From})
-		} else if filter.SortBy == "id" {
-			query = query.Where(squirrel.Gt{"id": filter.From})
-		} else {
-			slog.Error("GetPeopleFiltered incorrect SortBy Input: ", filter.SortBy)
+	switch sort {
+	case "age":
+		if from < 0 || to == 0 {
+			slog.Error("From or To field is empty")
 			return nil, nil
 		}
-	}
-	if filter.To > 0 {
-		if filter.SortBy == "age" {
-			query = query.Where(squirrel.Gt{"age": filter.To})
-		} else if filter.SortBy == "id" {
-			query = query.Where(squirrel.Gt{"id": filter.To})
-		} else {
-			slog.Error("GetPeopleFiltered incorrect SortBy Input: ", filter.SortBy)
+		query = `
+		SELECT * FROM people
+		WHERE age > $1 AND age < $2
+		ORDER BY age
+		LIMIT $3 OFFSET $4
+	`
+		args = append(args, from, to, perPage, (page-1)*perPage)
+	case "id":
+		if from == 0 || to == 0 {
+			slog.Error("From or To field is empty")
 			return nil, nil
 		}
+		query = `
+		SELECT * FROM people
+		WHERE id > $1 AND id < $2
+		ORDER BY id
+		LIMIT $3 OFFSET $4
+	`
+		args = append(args, from, to, perPage, (page-1)*perPage)
+	case "nation":
+		query = `
+		SELECT * FROM people
+		ORDER BY nationality
+		LIMIT $1 OFFSET $2
+	`
+		args = append(args, perPage, (page-1)*perPage)
+	case "gender":
+		query = `
+		SELECT * FROM people
+		ORDER BY gender
+		LIMIT $1 OFFSET $2
+	`
+		args = append(args, perPage, (page-1)*perPage)
+	default:
+		query = `
+		SELECT * FROM people
+		LIMIT $1 OFFSET $2
+	`
+		args = append(args, perPage, (page-1)*perPage)
 	}
 
-	query = query.Limit(uint64(perPage)).Offset(uint64((page - 1) * perPage))
-
-	builtQuery, args, err := query.ToSql()
-
-	rows, err := s.db.QueryContext(context.Background(), builtQuery, args...)
+	slog.Info(query, args)
+	rows, err := s.db.QueryContext(context.Background(), query, args...)
+	slog.Info("", rows)
 	if err != nil {
 		slog.Error("GetPeopleFiltered QueryContext Error ")
 		return nil, fmt.Errorf("error getting filtered people: %v", err)

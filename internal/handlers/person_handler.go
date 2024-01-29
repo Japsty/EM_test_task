@@ -41,29 +41,52 @@ func (ph *PersonHandler) AddPerson(c *gin.Context) {
 		return
 	}
 
-	age, err := ph.AgifyService.GetAge(personInput.Name)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get age"})
-		slog.Error("AddPerson GetAge Error: ", err)
-		return
-	}
+	ageCh := make(chan int)
+	genderCh := make(chan string)
+	nationCh := make(chan string)
 
-	//ch := make(chan int)
-	//go ph.AgifyService.GetAge(personInput.Name, ch)
-	//age := <-ch
+	go func() {
+		age, err := ph.AgifyService.GetAge(personInput.Name)
+		if err != nil {
+			slog.Error("AddPerson GetAge Error: ", err)
+		}
+		ageCh <- age
+	}()
 
-	gender, err := ph.GenderizeService.GetGender(personInput.Name)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get gender"})
-		slog.Error("AddPerson GetGender Error: ", err)
-		return
-	}
-	nation, err := ph.NationalizeService.GetNationality(personInput.Surname)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get nationality"})
-		slog.Error("AddPerson GetNationality Error: ", err)
-		return
-	}
+	go func() {
+		gender, err := ph.GenderizeService.GetGender(personInput.Name)
+		if err != nil {
+			slog.Error("AddPerson GetGender Error: ", err)
+		}
+		genderCh <- gender
+	}()
+
+	go func() {
+		nation, err := ph.NationalizeService.GetNationality(personInput.Surname)
+		if err != nil {
+			slog.Error("AddPerson GetNationality Error: ", err)
+		}
+		nationCh <- nation
+	}()
+
+	age := <-ageCh
+	gender := <-genderCh
+	nation := <-nationCh
+
+	//if age == 0 {
+	//	c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get age"})
+	//	return
+	//}
+	//
+	//if gender == "" {
+	//	c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get gender"})
+	//	return
+	//}
+	//
+	//if nation == "" {
+	//	c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get nationality"})
+	//	return
+	//}
 
 	person, err := ph.PersonRepo.CreatePerson(c.Request.Context(), storage.PersonParams{
 		Name:        personInput.Name,
@@ -74,8 +97,7 @@ func (ph *PersonHandler) AddPerson(c *gin.Context) {
 		Nationality: nation,
 	})
 	if err != nil {
-		c.Error(err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create person"})
+		c.AbortWithError(http.StatusInternalServerError, err).SetType(gin.ErrorTypePrivate)
 		slog.Error("AddPerson CreatePerson Error: ", err)
 		return
 	}
@@ -141,7 +163,7 @@ func (ph *PersonHandler) GetPerson(c *gin.Context) {
 
 func (ph *PersonHandler) GetPersonsFiltered(c *gin.Context) {
 	var filter storage.Filter
-	if err := c.BindQuery(&filter); err != nil {
+	if err := c.BindJSON(&filter); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		slog.Error("GetPersonsFiltered BindQuery Error: ", err)
 		return
@@ -161,7 +183,7 @@ func (ph *PersonHandler) GetPersonsFiltered(c *gin.Context) {
 		return
 	}
 
-	people, err := ph.PersonRepo.GetPeopleFiltered(page, perPage, filter)
+	people, err := ph.PersonRepo.GetPeopleFiltered(filter.SortBy, filter.From, filter.To, page, perPage)
 	if err != nil {
 		slog.Error("GetPersons GetPeople Error: ", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"Get People": err.Error()})
@@ -194,26 +216,50 @@ func (ph *PersonHandler) UpdatePerson(c *gin.Context) {
 		return
 	}
 
-	age, err := ph.AgifyService.GetAge(personInput.Name)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get age"})
-		slog.Error("AddPerson GetAge Error: ", err)
-		return
-	}
-	//ch := make(chan int)
-	//go ph.AgifyService.GetAge(personInput.Name,ch)
-	//age := <- ch
+	ageCh := make(chan int)
+	genderCh := make(chan string)
+	nationCh := make(chan string)
 
-	gender, err := ph.GenderizeService.GetGender(personInput.Name)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get gender"})
-		slog.Error("AddPerson GetGender Error: ", err)
+	go func() {
+		age, err := ph.AgifyService.GetAge(personInput.Name)
+		if err != nil {
+			slog.Error("AddPerson GetAge Error: ", err)
+		}
+		ageCh <- age
+	}()
+
+	go func() {
+		gender, err := ph.GenderizeService.GetGender(personInput.Name)
+		if err != nil {
+			slog.Error("AddPerson GetGender Error: ", err)
+		}
+		genderCh <- gender
+	}()
+
+	go func() {
+		nation, err := ph.NationalizeService.GetNationality(personInput.Surname)
+		if err != nil {
+			slog.Error("AddPerson GetNationality Error: ", err)
+		}
+		nationCh <- nation
+	}()
+
+	age := <-ageCh
+	gender := <-genderCh
+	nation := <-nationCh
+
+	if age == 0 {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get age"})
 		return
 	}
-	nation, err := ph.NationalizeService.GetNationality(personInput.Surname)
-	if err != nil {
+
+	if gender == "" {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get gender"})
+		return
+	}
+
+	if nation == "" {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get nationality"})
-		slog.Error("AddPerson GetNationality Error: ", err)
 		return
 	}
 
