@@ -21,7 +21,7 @@
 
 ### Доступные методы
 
-*У проекта есть описание методов в [Postman](https://elements.getpostman.com/redirect?entityId=29141861-9ae9709a-a2ae-4b74-b773-994f6aed8704&entityType=collection)*
+*У проекта есть описание методов в [Postman](https://api.postman.com/collections/29141861-24c437d5-dd2e-4053-9767-36326e30a105?access_key=undefined)*
 
 #### **POST** /people
 Метод добавления нового человека
