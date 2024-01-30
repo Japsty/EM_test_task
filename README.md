@@ -1,4 +1,4 @@
-# Тестовое задание от EfficentMobile Backend
+# Тестовое задание от EffectiveMobile Backend
 # Сервис дополнения пользователей информацией
 
 ##### Автор: [Виноградов Данил](https://t.me/japsty) 
