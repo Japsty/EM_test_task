@@ -1,12 +1,10 @@
 package implement
 
 import (
-	"EM_test_task/pkg/server"
+	"EM_test_task/pkg/client"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 )
 
@@ -22,30 +20,28 @@ type GenderizeResponce struct {
 // GetGender - метод для похода в API Genderuze, получает пол по имени
 func (s *GenderizeService) GetGender(name string) (string, error) {
 	gender := os.Getenv("GENDERIZE_URL")
-	url := fmt.Sprintf(gender + name)
+	urlQuery := os.Getenv("URL_QUERY")
+	url := fmt.Sprintf(gender + urlQuery + name)
 
-	client := server.NewClient()
+	newClient := client.NewClient()
 
-	resp, err := client.SendRequest(url)
+	resp, err := newClient.GetAPIResponseByURL(url)
 	if err != nil {
 		log.Printf("Error making Genderize request: %v", err)
 		return "", err
 	}
-	defer resp.Body.Close()
 
-	var genderizeResponce GenderizeResponce
-
-	if resp.StatusCode == http.StatusOK {
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			log.Printf("Error reading the response body:%v", err)
-			return "", err
-		}
-		json.Unmarshal(body, &genderizeResponce)
-
-		return genderizeResponce.Gender, nil
-	} else {
-		fmt.Println("Error: ", resp.Status)
+	body, err := newClient.ReadResponseBody(resp)
+	if err != nil {
+		log.Printf("Error reading Agify response body: %v", err)
+		return "", err
 	}
-	return "", err
+
+	var genderizeResponse GenderizeResponce
+	err = json.Unmarshal(body, &genderizeResponse)
+	if err != nil {
+		log.Printf("Error unmarshaling json: %v", err)
+		return "", err
+	}
+	return genderizeResponse.Gender, nil
 }

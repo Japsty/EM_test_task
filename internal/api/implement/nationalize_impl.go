@@ -1,12 +1,10 @@
 package implement
 
 import (
-	"EM_test_task/pkg/server"
+	"EM_test_task/pkg/client"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 )
 
@@ -27,39 +25,37 @@ type CountryInfo struct {
 // (в тз было указано имя в запросе, но в доке апишки написана фамилия) )
 func (s *NationalizeService) GetNationality(surname string) (string, error) {
 	nation := os.Getenv("NATIONALIZE_URL")
-	url := fmt.Sprintf(nation + surname)
+	urlQuery := os.Getenv("URL_QUERY")
+	url := fmt.Sprintf(nation + urlQuery + surname)
 
-	client := server.NewClient()
+	newClient := client.NewClient()
 
-	resp, err := client.SendRequest(url)
+	resp, err := newClient.GetAPIResponseByURL(url)
 	if err != nil {
 		log.Printf("Error making Nationalize request: %v", err)
 		return "", err
 	}
-	defer resp.Body.Close()
+	body, err := newClient.ReadResponseBody(resp)
+	if err != nil {
+		log.Printf("Error reading Agify response body: %v", err)
+		return "", err
+	}
 
 	var nationalizeResponce NationalizeResponse
-
-	if resp.StatusCode == http.StatusOK {
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			log.Printf("Error reading the response body:%v", err)
-			return "", err
-		}
-		json.Unmarshal(body, &nationalizeResponce)
-
-		var maxProb float64
-		var foundConuntry string
-		for _, country := range nationalizeResponce.Countries {
-			if country.Probability > maxProb {
-				maxProb = country.Probability
-				foundConuntry = country.CountryName
-			}
-		}
-
-		return foundConuntry, nil
-	} else {
-		fmt.Println("Error: ", resp.Status)
+	err = json.Unmarshal(body, &nationalizeResponce)
+	if err != nil {
+		log.Printf("Error unmarshaling json: %v", err)
+		return "", err
 	}
-	return "", err
+
+	var maxProb float64
+	var foundConuntry string
+	for _, country := range nationalizeResponce.Countries {
+		if country.Probability > maxProb {
+			maxProb = country.Probability
+			foundConuntry = country.CountryName
+		}
+	}
+	return foundConuntry, nil
+
 }

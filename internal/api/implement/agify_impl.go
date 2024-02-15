@@ -1,12 +1,10 @@
 package implement
 
 import (
-	"EM_test_task/pkg/server"
+	"EM_test_task/pkg/client"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 )
 
@@ -22,30 +20,28 @@ type AgifyResponse struct {
 // GetAge - метод для похода в API Agify, получает возраст по имени
 func (s *AgifyService) GetAge(name string) (int, error) {
 	agify := os.Getenv("AGIFY_URL")
-	url := fmt.Sprintf(agify + name)
+	urlQuery := os.Getenv("URL_QUERY")
+	url := fmt.Sprintf(agify + urlQuery + name)
 
-	client := server.NewClient()
+	newClient := client.NewClient()
 
-	resp, err := client.SendRequest(url)
+	resp, err := newClient.GetAPIResponseByURL(url)
 	if err != nil {
 		log.Printf("Error making Agify request: %v", err)
 		return 0, err
 	}
-	defer resp.Body.Close()
+
+	body, err := newClient.ReadResponseBody(resp)
+	if err != nil {
+		log.Printf("Error reading Agify response body: %v", err)
+		return 0, err
+	}
 
 	var agifyResponse AgifyResponse
-
-	if resp.StatusCode == http.StatusOK {
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			log.Printf("Error reading the response body:%v", err)
-			return 0, err
-		}
-		json.Unmarshal(body, &agifyResponse)
-
-		return agifyResponse.Age, nil
-	} else {
-		fmt.Println("Error: ", resp.Status)
+	err = json.Unmarshal(body, &agifyResponse)
+	if err != nil {
+		log.Printf("Error unmarshaling json: %v", err)
+		return 0, err
 	}
-	return 0, err
+	return agifyResponse.Age, nil
 }

@@ -89,7 +89,7 @@ func (s *personRepository) GetPeople(page, perPage int) ([]entities.Person, erro
 	offset := (page - 1) * perPage
 
 	query := `
-		SELECT * FROM people
+		SELECT id, name, surname, patronymic, age, gender, nationality, created_at, updated_at FROM people
 		LIMIT $1 OFFSET $2
 	`
 	rows, err := s.db.QueryContext(context.Background(), query, perPage, offset)
@@ -127,7 +127,7 @@ func (s *personRepository) GetPeople(page, perPage int) ([]entities.Person, erro
 // GetPerson - метод для получения одного человека по id
 func (s *personRepository) GetPerson(id int) (entities.Person, error) {
 	query := `
-		SELECT * FROM people
+		SELECT id, name, surname, patronymic, age, gender, nationality, created_at, updated_at FROM people
 		WHERE id = $1
 	`
 
@@ -155,7 +155,7 @@ func (s *personRepository) GetPerson(id int) (entities.Person, error) {
 }
 
 // GetPeopleFiltered - метод для получения списка людей с применением пагинации и фильтрации
-func (s *personRepository) GetPeopleFiltered(sort string, from int, to int, page int, perPage int) ([]entities.Person, error) {
+func (s *personRepository) GetPeopleFiltered(sort string, from, to, page, perPage int) ([]entities.Person, error) {
 	slog.Info("", sort, from, to)
 
 	var query string
@@ -168,7 +168,7 @@ func (s *personRepository) GetPeopleFiltered(sort string, from int, to int, page
 			return nil, nil
 		}
 		query = `
-		SELECT * FROM people
+		SELECT id, name, surname, patronymic, age, gender, nationality, created_at, updated_at FROM people
 		WHERE age > $1 AND age < $2
 		ORDER BY age
 		LIMIT $3 OFFSET $4
@@ -180,7 +180,7 @@ func (s *personRepository) GetPeopleFiltered(sort string, from int, to int, page
 			return nil, nil
 		}
 		query = `
-		SELECT * FROM people
+		SELECT id, name, surname, patronymic, age, gender, nationality, created_at, updated_at FROM people
 		WHERE id > $1 AND id < $2
 		ORDER BY id
 		LIMIT $3 OFFSET $4
@@ -188,21 +188,21 @@ func (s *personRepository) GetPeopleFiltered(sort string, from int, to int, page
 		args = append(args, from, to, perPage, (page-1)*perPage)
 	case "nation":
 		query = `
-		SELECT * FROM people
+		SELECT id, name, surname, patronymic, age, gender, nationality, created_at, updated_at FROM people
 		ORDER BY nationality
 		LIMIT $1 OFFSET $2
 	`
 		args = append(args, perPage, (page-1)*perPage)
 	case "gender":
 		query = `
-		SELECT * FROM people
+		SELECT id, name, surname, patronymic, age, gender, nationality, created_at, updated_at FROM people
 		ORDER BY gender
 		LIMIT $1 OFFSET $2
 	`
 		args = append(args, perPage, (page-1)*perPage)
 	default:
 		query = `
-		SELECT * FROM people
+		SELECT id, name, surname, patronymic, age, gender, nationality, created_at, updated_at FROM people
 		LIMIT $1 OFFSET $2
 	`
 		args = append(args, perPage, (page-1)*perPage)

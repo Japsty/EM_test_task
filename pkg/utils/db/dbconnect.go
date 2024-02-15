@@ -8,8 +8,8 @@ import (
 	"time"
 )
 
-// ConnectToDb - функция создающее подключение с бд и предоставляющее его наружу
-func ConnectToDb() (*sql.DB, error) {
+// NewPostgresConnection - функция создающее подключение с бд и предоставляющее его наружу
+func NewPostgresConnection() (*sql.DB, error) {
 	DBDriver := os.Getenv("DB_DRIVER")
 	DBSource := os.Getenv("DB_SOURCE")
 
