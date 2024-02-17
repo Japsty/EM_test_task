@@ -11,7 +11,7 @@ import (
 type AgifyService struct {
 }
 
-type AgifyResponse struct {
+type agifyResponse struct {
 	Count int    `json:"count"`
 	Name  string `json:"name"`
 	Age   int    `json:"age"`
@@ -37,7 +37,7 @@ func (s *AgifyService) GetAge(name string) (int, error) {
 		return 0, err
 	}
 
-	var agifyResponse AgifyResponse
+	var agifyResponse agifyResponse
 	err = json.Unmarshal(body, &agifyResponse)
 	if err != nil {
 		log.Printf("Error unmarshaling json: %v", err)

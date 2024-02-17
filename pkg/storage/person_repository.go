@@ -18,6 +18,9 @@ type Repository interface {
 	GetPeopleFiltered(sort string, from int, to int, page int, perPage int) ([]entities.Person, error)
 	UpdatePerson(id int, person entities.Person) error
 	DeletePerson(id int) error
+
+	CreateUser(user entities.User) (int, error)
+	GetUser(username string) (entities.User, error)
 }
 
 type personRepository struct {
@@ -25,11 +28,7 @@ type personRepository struct {
 }
 
 func New(db *sql.DB) Repository {
-	s := &personRepository{
-		db: db,
-	}
-
-	return s
+	return &personRepository{db: db}
 }
 
 type PersonParams struct {
@@ -213,7 +212,7 @@ func (s *personRepository) GetPeopleFiltered(sort string, from, to, page, perPag
 	slog.Info("", rows)
 	if err != nil {
 		slog.Error("GetPeopleFiltered QueryContext Error ")
-		return nil, fmt.Errorf("error getting filtered people: %v", err)
+		return nil, fmt.Errorf("error getting filtered people: %w", err)
 	}
 	defer rows.Close()
 
@@ -265,10 +264,15 @@ func (s *personRepository) DeletePerson(id int) error {
         DELETE FROM people
         WHERE id = $1
     `
-	_, err := s.db.Exec(query, id)
+	deleted, err := s.db.Exec(query, id)
 	if err != nil {
 		slog.Error("DeletePerson ExecQuery Error")
-		return fmt.Errorf("error deleting person: %v", err)
+		return fmt.Errorf("Error deleting person: %w", err)
+	}
+	deletedRows, err := deleted.RowsAffected()
+	if deletedRows > 1 {
+		slog.Error("DeletePerson deletedRows Error")
+		return fmt.Errorf("Error deleted more than 1 person: %w", err)
 	}
 
 	slog.Debug("DeletePerson deleted person with id:", id)

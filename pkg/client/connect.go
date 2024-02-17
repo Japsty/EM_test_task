@@ -38,7 +38,12 @@ func (c *Client) GetAPIResponseByURL(url string) (*http.Response, error) {
 }
 
 func (c *Client) ReadResponseBody(resp *http.Response) ([]byte, error) {
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Printf("Error closing responce body:%v", err)
+		}
+	}(resp.Body)
 
 	if resp.StatusCode == http.StatusOK {
 		body, err := io.ReadAll(resp.Body)

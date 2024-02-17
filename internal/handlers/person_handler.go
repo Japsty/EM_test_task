@@ -12,16 +12,10 @@ import (
 	"time"
 )
 
-type PersonInput struct {
+type personInput struct {
 	Name       string `json:"name"`
 	Surname    string `json:"surname"`
 	Patronymic string `json:"patronymic,omitempty"`
-}
-
-type ApiInput struct {
-	Age         int    `json:"age,omitempty"`
-	Gender      string `json:"gender,omitempty"`
-	Nationality string `json:"nationality,omitempty"`
 }
 
 type PersonHandler struct {
@@ -34,7 +28,7 @@ type PersonHandler struct {
 // AddPerson - метод, вызывающий CreatePerson и предоставляющий всю необходимую
 // информацию для создания записи в бд
 func (ph *PersonHandler) AddPerson(c *gin.Context) {
-	var personInput PersonInput
+	var personInput personInput
 	if err := c.BindJSON(&personInput); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		slog.Error("AddPerson BindJSON Error: ", err)
@@ -187,7 +181,7 @@ func (ph *PersonHandler) GetPersonsFiltered(c *gin.Context) {
 
 // UpdatePerson - метод обновляющий запись в бд в соответствии с новой информацией
 func (ph *PersonHandler) UpdatePerson(c *gin.Context) {
-	var personInput PersonInput
+	var personInput personInput
 	if err := c.BindJSON(&personInput); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		slog.Error("UpdatePerson BindJSON Error: ", err)

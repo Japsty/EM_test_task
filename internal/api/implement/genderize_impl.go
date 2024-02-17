@@ -10,14 +10,14 @@ import (
 
 type GenderizeService struct{}
 
-type GenderizeResponce struct {
+type genderizeResponse struct {
 	Count       int     `json:"count"`
 	Name        string  `json:"name"`
 	Gender      string  `json:"gender"`
 	Probability float64 `json:"float64"`
 }
 
-// GetGender - метод для похода в API Genderuze, получает пол по имени
+// GetGender - метод для похода в API Genderize, получает пол по имени
 func (s *GenderizeService) GetGender(name string) (string, error) {
 	gender := os.Getenv("GENDERIZE_URL")
 	urlQuery := os.Getenv("URL_QUERY")
@@ -37,7 +37,7 @@ func (s *GenderizeService) GetGender(name string) (string, error) {
 		return "", err
 	}
 
-	var genderizeResponse GenderizeResponce
+	var genderizeResponse genderizeResponse
 	err = json.Unmarshal(body, &genderizeResponse)
 	if err != nil {
 		log.Printf("Error unmarshaling json: %v", err)

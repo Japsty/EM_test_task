@@ -10,19 +10,19 @@ import (
 
 type NationalizeService struct{}
 
-type NationalizeResponse struct {
+type nationalizeResponse struct {
 	Count     int           `json:"count"`
 	Name      string        `json:"name"`
-	Countries []CountryInfo `json:"country"`
+	Countries []countryInfo `json:"country"`
 }
 
-type CountryInfo struct {
+type countryInfo struct {
 	CountryName string  `json:"country_id"`
 	Probability float64 `json:"probability"`
 }
 
 // GetNationality - метод для похода в API Nationalize, получает национальность по фамилии
-// (в тз было указано имя в запросе, но в доке апишки написана фамилия) )
+// (в тз было указано имя в запросе, но в доке API написана фамилия)
 func (s *NationalizeService) GetNationality(surname string) (string, error) {
 	nation := os.Getenv("NATIONALIZE_URL")
 	urlQuery := os.Getenv("URL_QUERY")
@@ -41,21 +41,20 @@ func (s *NationalizeService) GetNationality(surname string) (string, error) {
 		return "", err
 	}
 
-	var nationalizeResponce NationalizeResponse
-	err = json.Unmarshal(body, &nationalizeResponce)
+	var nationalizeResponse nationalizeResponse
+	err = json.Unmarshal(body, &nationalizeResponse)
 	if err != nil {
 		log.Printf("Error unmarshaling json: %v", err)
 		return "", err
 	}
 
 	var maxProb float64
-	var foundConuntry string
-	for _, country := range nationalizeResponce.Countries {
+	var foundCountry string
+	for _, country := range nationalizeResponse.Countries {
 		if country.Probability > maxProb {
 			maxProb = country.Probability
-			foundConuntry = country.CountryName
+			foundCountry = country.CountryName
 		}
 	}
-	return foundConuntry, nil
-
+	return foundCountry, nil
 }
