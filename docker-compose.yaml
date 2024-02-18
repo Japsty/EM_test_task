@@ -26,6 +26,48 @@ services:
     environment:
       PORT: '8080'
 
+  service2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - pq_database
+    networks:
+      - service_network
+    ports:
+      - "8081:8081"
+    environment:
+      PORT: '8081'
+
+  service3:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - pq_database
+    networks:
+      - service_network
+    ports:
+      - "8082:8082"
+    environment:
+      PORT: '8082'
+
+  nginx_reverse_proxy:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - service
+      - service2
+      - service3
+    networks:
+      - service_network
+#    links:
+#      - service
+
+
 networks:
   service_network:
     driver: bridge
