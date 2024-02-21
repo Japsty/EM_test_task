@@ -12,6 +12,7 @@ import (
 	"log"
 	"log/slog"
 	_ "net/http/pprof"
+	"os"
 )
 
 //		@title			People Information Enrichment Service
@@ -44,14 +45,16 @@ func main() {
 
 	repo := storage.New(db)
 	// делаем миграцию
-	provider, err := goose.NewProvider(database.DialectPostgres, db, migrations.Embed)
-	if err != nil {
-		log.Fatal("Main failed to create NewProvider for migration")
-	}
-	_, err = provider.Up(context.Background())
-	if err != nil {
-		slog.Info("Failed to up migration")
-		return
+	if os.Getenv("MIGRATE_DB") == "true" {
+		provider, err := goose.NewProvider(database.DialectPostgres, db, migrations.Embed)
+		if err != nil {
+			log.Fatal("Main failed to create NewProvider for migration")
+		}
+		_, err = provider.Up(context.Background())
+		if err != nil {
+			slog.Info("Failed to up migration")
+			return
+		}
 	}
 
 	router := SetupRouter(repo)
